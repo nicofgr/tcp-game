@@ -1,11 +1,7 @@
 CC = clang
-CFLAGS = -Wall
+CFLAGS = -Wall -std=c99 -fsanitize=address
 
-all: server client
+all:
+	$(CC) $(CFLAGS) main.c -o saida.out
 
-server:
-	$(CC) $(CFLAGS) server.c -o server.out
-
-client: 
-	$(CC) $(CFLAGS) client.c -o client.out
 
