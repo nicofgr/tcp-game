@@ -18,8 +18,8 @@ typedef enum system_type{
 }system_type;
 
 typedef enum player_role{
-        FOX,
-        HOUND
+        FOX   = 1,
+        HOUND = 2
 }player_role;
 
 int create_server(int port){
@@ -101,12 +101,12 @@ void init_board(int board[8][8]){
                 }
         }
 
-        board[0][4] = 1;
+        board[0][4] = FOX;
 
-        board[7][1] = 2;
-        board[7][3] = 2;
-        board[7][5] = 2;
-        board[7][7] = 2;
+        board[7][1] = HOUND;
+        board[7][3] = HOUND;
+        board[7][5] = HOUND;
+        board[7][7] = HOUND;
 }
 
 void print_board(const int board[8][8]){
@@ -150,6 +150,12 @@ int test_move(const player_role role, int board[8][8], char move[10]){
                                         break;
                                 }
                         }
+                }
+        }
+        if(role == HOUND){
+                if(board[curr_y][curr_x] != HOUND){
+                        printf("Must select a hound. Try again...\n");
+                        return 0;
                 }
         }
 
@@ -292,7 +298,11 @@ int main(int argc, char* argv[]){
                         connfd = create_client();
                         connect_to_server(connfd, port);
                         read(connfd, &player_role, sizeof(player_role));
-                        player_role = (player_role + 1)%2;
+                        if(player_role == FOX){
+                                player_role = HOUND;
+                        }else{
+                                player_role = FOX;
+                        }
                         break;
         }
                 //char buffer[] = "hello client!";
