@@ -134,13 +134,56 @@ void print_board(const int board[8][8]){
         printf("   A B C D E F G H\n");
 }
 
-int move_fox(int board[8][8], char move[10]){
-        int x = move[0] - 'a';
-        int y = move[1] - '0' - 1;
-        if(y < 0 || y > 7 || x < 0 || x > 8){
+int test_move(const player_role role, int board[8][8], char move[10]){
+        int curr_x = move[0] - 'a';
+        int curr_y = move[1] - '0' - 1;
+        int new_x = move[3] - 'a';
+        int new_y = move[4] - '0' - 1;
+        if(role == FOX){
+                new_x = curr_x;
+                new_y = curr_y;
+                for(int i = 0; i < 8; i++){
+                        for(int j = 0; j < 8; j++){
+                                if(board[i][j] == 1){
+                                        curr_x = j;
+                                        curr_y = i;
+                                        break;
+                                }
+                        }
+                }
+        }
+
+        printf("%d:%d -> %d:%d\n", curr_x, curr_y, new_x, new_y);
+
+        if(new_y < 0 || new_y > 7 || new_x < 0 || new_x > 8){  // BOARD BOUNDS
                 printf("Movement out of board. Try again...\n");
                 return 0;
         }
+
+        int delta_x = abs(new_x - curr_x);
+        int delta_y = abs(new_y - curr_y);
+
+        if((delta_x > 1) || (delta_y > 1)){                     // MOV DIST
+                printf("Illegal move!\n");
+                return 0;
+        }
+        if(delta_x + delta_y != 2){                             // DIAGONALS
+                printf("Must move diagonally!\n");
+                return 0;
+        }
+        if(role == HOUND){                                      // HOUND ONLY DOWN
+                if(new_y > curr_y){
+                        printf("Hound cant move up!\n");
+                        return 0;
+                }
+        }
+
+        return 1;
+}
+
+int move_fox(int board[8][8], char move[10]){
+        int x = move[0] - 'a';
+        int y = move[1] - '0' - 1;
 
         int curr_x, curr_y;
         for(int i = 0; i < 8; i++){
@@ -152,7 +195,6 @@ int move_fox(int board[8][8], char move[10]){
                         }
                 }
         }
-
         
         board[curr_y][curr_x] = 0;
         board[y][x] = 1;
@@ -179,9 +221,11 @@ void game(player_role role, int connfd){
                 print_board(board);
                 switch(role){
                         case FOX:
-                                printf("You: 🦊\n");
-                                printf("Next move: ");
-                                scanf("%s", move);
+                                do{
+                                        printf("You: 🦊\n");
+                                        printf("Next move: ");
+                                        scanf("%s", move);
+                                }while(test_move(FOX, board, move) == 0);
                                 move_fox(board, move);
                                 print_board(board);
 
@@ -195,9 +239,11 @@ void game(player_role role, int connfd){
                                 read(connfd, &board, sizeof(board));
                                 print_board(board);
 
-                                printf("You: 🐶\n");
-                                printf("Next move:");
-                                fgets(move, sizeof(move), stdin);
+                                do{
+                                        printf("You: 🐶\n");
+                                        printf("Next move:");
+                                        fgets(move, sizeof(move), stdin);
+                                }while(test_move(HOUND, board, move) == 0);
                                 move_hound(board, move);
                                 write(connfd, &board, sizeof(board));
                                 break;
